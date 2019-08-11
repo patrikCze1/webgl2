@@ -28,7 +28,7 @@ class Program {
         }
 
         console.log(gl.getShaderInfoLog(shader));
-        alert('error, see console');
+        alert('Error, see console.');
         gl.deleteShader(shader);
         return null;
     }

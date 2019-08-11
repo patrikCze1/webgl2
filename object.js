@@ -1,24 +1,66 @@
 class Object {
     //https://free3d.com/3d-models/architecture
-    constructor() {
-        
-    }
 
-    drawRectangle (gl, x, y, width, height) {
-        let x1 = x;
-        let x2 = x + width;
-        let y1 = y;
-        let y2 = height;
-    
-        let points = [
-            x1, y1,
-            x2, y1,
-            x1, y2,
-            x1, y2,
-            x2, y1,
-            x2, y2,
-        ];
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
+    points = [
+        // Front
+        0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        1.0, 0.0, 0.0,
+
+        0.0, 1.0, 0.0,
+        1.0, 0.0, 0.0,
+        1.0, 1.0, 0.0,
+
+        // Left
+        0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, -1.0,
+
+        0.0, 1.0, -1.0,
+        0.0, 0.0, -1.0,
+        0.0, 1.0, 0.0,
+
+        // Back
+        0.0, 0.0, -1.0,
+        0.0, 1.0, -1.0,
+        1.0, 0.0, -1.0,
+
+        0.0, 1.0, -1.0,
+        1.0, 0.0, -1.0,
+        1.0, 1.0, -1.0,
+
+        // Right
+        1.0, 0.0, 0.0,
+        1.0, 1.0, 0.0,
+        1.0, 0.0, -1.0,
+
+        1.0, 1.0, -1.0,
+        1.0, 0.0, -1.0,
+        1.0, 1.0, 0.0,
+
+        // Top
+        0.0, 1.0, 0.0,
+        0.0, 1.0, -1.0,
+        1.0, 1.0, 0.0,
+
+        1.0, 1.0, 0.0,
+        0.0, 1.0, -1.0,
+        1.0, 1.0, -1.0,
+
+        // Bottom
+        0.0, 0.0, 0.0,
+        0.0, 0.0, -1.0,
+        1.0, 0.0, 0.0,
+
+        1.0, 0.0, 0.0,
+        0.0, 0.0, -1.0,
+        1.0, 0.0, -1.0,
+    ];
+
+    constructor() { }
+
+    getPoints () {
+        return this.points;
     }
 
     drawF(gl) {
@@ -154,47 +196,9 @@ class Object {
                 0, 150,   0,
             ]),
         gl.STATIC_DRAW);
-      }
+    }
 
-    drawCube (gl) {
-        const points = [
-            // Front face
-            -1.0, -1.0,  1.0,
-             1.0, -1.0,  1.0,
-             1.0,  1.0,  1.0,
-            -1.0,  1.0,  1.0,
-            
-            // Back face
-            -1.0, -1.0, -1.0,
-            -1.0,  1.0, -1.0,
-             1.0,  1.0, -1.0,
-             1.0, -1.0, -1.0,
-            
-            // Top face
-            -1.0,  1.0, -1.0,
-            -1.0,  1.0,  1.0,
-             1.0,  1.0,  1.0,
-             1.0,  1.0, -1.0,
-            
-            // Bottom face
-            -1.0, -1.0, -1.0,
-             1.0, -1.0, -1.0,
-             1.0, -1.0,  1.0,
-            -1.0, -1.0,  1.0,
-            
-            // Right face
-             1.0, -1.0, -1.0,
-             1.0,  1.0, -1.0,
-             1.0,  1.0,  1.0,
-             1.0, -1.0,  1.0,
-            
-            // Left face
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0,  1.0,
-            -1.0,  1.0,  1.0,
-            -1.0,  1.0, -1.0,
-        ];
-
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
+    drawCube (gl) {        
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.points), gl.STATIC_DRAW);
     }
 }
