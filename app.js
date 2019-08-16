@@ -9,20 +9,19 @@ uniform mat4 uProjectionMatrix;
 
 out vec4 vColor;
 out vec3 vNormal;
-
 out vec3 vLighting;
  
 void main() {
     gl_Position = uProjectionMatrix * uModelViewMatrix * aPosition;
 
     // lightning
-    highp vec3 ambientLight = vec3(0.3, 0.3, 0.3);
-    highp vec3 directionalLightColor = vec3(1, 1, 1);
-    highp vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
+    vec3 ambientLight = vec3(0.3, 0.3, 0.3);
+    vec3 directionalLightColor = vec3(1, 1, 1);
+    vec3 directionalVector = normalize(vec3(0.85, 0.8, 0.75));
 
-    highp vec4 transformedNormal = uNormalMatrix * vec4(aNormal, 1.0);
+    vec4 transformedNormal = uNormalMatrix * vec4(aNormal, 1.0);
 
-    highp float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
+    float directional = max(dot(transformedNormal.xyz, directionalVector), 0.0);
     vLighting = ambientLight + (directionalLightColor * directional);
     vColor = aColor;
 }
@@ -43,7 +42,15 @@ void main() {
     outColor.rgb *= vLighting;
 }
 `;
-// todo stíny, rotace
+// todo stíny
+
+const map = [
+    [1, 0, 1, 0, 0,],
+    [1, 0, 1, 0, 1,],
+    [1, 1, 0, 1, 0,],
+    [1, 0, 1, 1, 0,],
+    [1, 0, 1, 0, 1,],
+];
 
 function start() {
     // get canvas
@@ -60,7 +67,8 @@ function start() {
 
     const pr = new Program();
     const helper = new Helper();
-    const object = new Object();
+    const cube = new Cube();
+    const floor = new Floor();
 
     //
     // create shaders
@@ -85,153 +93,15 @@ function start() {
     const normalMatrix = gl.getUniformLocation(program, 'uNormalMatrix');
 
     // Create a vertex array object
-    const va = gl.createVertexArray();
+    const cubeVa = gl.createVertexArray();
+    const floorVa = gl.createVertexArray();
     // we are working with
-    gl.bindVertexArray(va);
+    gl.bindVertexArray(floorVa);
 
-    //
-    // position
-    //
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    floor.draw(gl, positionLocation, colorLocation, normalLocation);
 
-    // draw object
-    object.drawCube(gl);
-    
-    // turn on
-    gl.enableVertexAttribArray(positionLocation);
-
-    // how to get data from buffer
-    let size = 3; // 3 components 3D xyz
-    let type = gl.FLOAT; //data is float
-    let normalize = false;
-    let stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
-    let offset = 0; //start at the beginning of the buffer
-    gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
-
-    //
-    // color
-    // 
-    const colors = [
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,   
-
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-
-        0.0,  1.0,  1.0,  1.0,   
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-        0.0,  1.0,  1.0,  1.0,
-    ];
-    
-    const colorBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(colorLocation);
-
-    size = 4; 
-    type = gl.FLOAT; 
-    normalize = false; 
-    stride = 0; 
-    offset = 0; 
-    gl.vertexAttribPointer(colorLocation, size, type, normalize, stride, offset);
-
-    //
-    // normals
-    //    
-    const normals = [
-        // Front
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-        0, 0, 1,
-
-        // Left
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-        -1, 0, 0,
-
-        // Back
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-        0, 0, -1,
-
-        // Right
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-        1, 0, 0,
-
-        // Top
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-        0, 1, 0,
-
-        // Bottom
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0,
-        0, -1, 0,
-    ];
-
-    const normalBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(normalLocation);
-
-    size = 3; 
-    type = gl.FLOAT; 
-    normalize = false; 
-    stride = 0;
-    offset = 0;
-    gl.vertexAttribPointer(normalLocation, size, type, normalize, stride, offset);
+    gl.bindVertexArray(cubeVa);
+    cube.draw(gl, positionLocation, colorLocation, normalLocation);
 
     //
     // variables
@@ -291,7 +161,7 @@ function start() {
         gl.useProgram(program);
 
         // bind attribute/buffer
-        gl.bindVertexArray(va);
+        gl.bindVertexArray(cubeVa);
 
         //
         // camera
@@ -301,39 +171,60 @@ function start() {
         const viewM = glMatrix.mat4.create();
         const normalM = glMatrix.mat4.create();
         //glMatrix.mat4.ortho(projectionM, 0, canvas.width, canvas.height, 0, 1, 400);
-        glMatrix.mat4.perspective(projectionM, 75 * Math.PI/180, canvas.width / canvas.height, 0.1, 400);
+        glMatrix.mat4.perspective(projectionM, 60 * Math.PI/180, canvas.width / canvas.height, 0.1, 400);
 
         glMatrix.mat4.translate(modelM, modelM, move);
-        glMatrix.mat4.translate(viewM, viewM, [-3, 0, 1]);
+        glMatrix.mat4.translate(viewM, viewM, [-1, .1, 1]);
         glMatrix.mat4.invert(viewM, viewM);
 
         const modelViewM = glMatrix.mat4.create();
-        //const modelViewProjectionM = glMatrix.mat4.create();
 
         glMatrix.mat4.multiply(modelViewM, viewM, modelM);
-        //glMatrix.mat4.multiply(modelViewProjectionM, projectionM, modelViewM);
+/*
+        glMatrix.mat4.rotateX(modelViewM, modelViewM, speed / 60);
+        glMatrix.mat4.rotateY(modelViewM, modelViewM, speed / 60);
+        glMatrix.mat4.rotateZ(modelViewM, modelViewM, speed / 60);*/
 
         glMatrix.mat4.invert(normalM, modelViewM);
-        glMatrix.mat4.transpose(normalM, normalM);
+        glMatrix.mat4.transpose(normalM, normalM);    
+        
+        // Set the translation.
 
-        //for (let i = 0; i < 3; i++) {     
-            
-            glMatrix.mat4.rotateX(modelViewM, modelViewM, speed / 60);
-            glMatrix.mat4.rotateY(modelViewM, modelViewM, speed / 60);
-            glMatrix.mat4.rotateZ(modelViewM, modelViewM, speed / 60);
-            
-            // Set the translation.
-            gl.uniformMatrix4fv(projectionMatrix, false, projectionM);
-            gl.uniformMatrix4fv(modelViewMatrix, false, modelViewM);
-            gl.uniformMatrix4fv(normalMatrix, false, normalM);
 
-            //
-            // draw scene
-            //
-            // type, offset, count
-            gl.drawArrays(gl.TRIANGLES, 0, 6 * 6);
-        //}
-        speed += .7;
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 5; j++) {
+                glMatrix.mat4.translate(modelViewM, modelViewM, [i, .1, -j]);
+                glMatrix.mat4.scale(modelViewM, modelViewM, [1, 1 + i, 1]);
+
+                gl.uniformMatrix4fv(projectionMatrix, false, projectionM);
+                gl.uniformMatrix4fv(modelViewMatrix, false, modelViewM);
+                gl.uniformMatrix4fv(normalMatrix, false, normalM);
+
+                gl.drawArrays(gl.TRIANGLES, 0, 6 * 6);
+                
+            }
+            //glMatrix.mat4.identity(modelViewM);
+        }
+
+        //
+        // draw scene
+        //
+        // type, offset, count
+        //gl.drawArrays(gl.TRIANGLES, 0, 6 * 6);
+
+        gl.bindVertexArray(floorVa);
+
+        glMatrix.mat4.identity(modelViewM);
+        glMatrix.mat4.multiply(modelViewM, viewM, modelM);
+
+
+        gl.uniformMatrix4fv(projectionMatrix, false, projectionM);
+        gl.uniformMatrix4fv(modelViewMatrix, false, modelViewM);
+        gl.uniformMatrix4fv(normalMatrix, false, normalM);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        speed += .6;
         console.log(speed);
         requestAnimationFrame(draw);
     }    
