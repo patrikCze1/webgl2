@@ -8,7 +8,6 @@ uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 
 out vec4 vColor;
-out vec3 vNormal;
 out vec3 vLighting;
  
 void main() {
@@ -42,15 +41,7 @@ void main() {
     outColor.rgb *= vLighting;
 }
 `;
-// todo stíny
 
-const map = [
-    [1, 0, 1, 0, 0,],
-    [1, 0, 1, 0, 1,],
-    [1, 1, 0, 1, 0,],
-    [1, 0, 1, 1, 0,],
-    [1, 0, 1, 0, 1,],
-];
 
 function start() {
     // get canvas
@@ -66,9 +57,8 @@ function start() {
     }
 
     const pr = new Program();
-    const helper = new Helper();
     const cube = new Cube();
-    const floor = new Floor();
+    const grid = new Grid();
 
     //
     // create shaders
@@ -79,7 +69,7 @@ function start() {
     //
     // create webgl program
     //
-    let program = pr.createProgram(gl, vertexShader, fragmentShader);
+    const program = pr.createProgram(gl, vertexShader, fragmentShader);
 
     //
     // attributes
@@ -92,13 +82,15 @@ function start() {
     const modelViewMatrix = gl.getUniformLocation(program, 'uModelViewMatrix');
     const normalMatrix = gl.getUniformLocation(program, 'uNormalMatrix');
 
+    //
     // Create a vertex array object
+    //
     const cubeVa = gl.createVertexArray();
-    const floorVa = gl.createVertexArray();
-    // we are working with
-    gl.bindVertexArray(floorVa);
+    const gridVa = gl.createVertexArray();
 
-    floor.draw(gl, positionLocation, colorLocation, normalLocation);
+    // we are working with
+    gl.bindVertexArray(gridVa);
+    grid.draw(gl, positionLocation, colorLocation, normalLocation);
 
     gl.bindVertexArray(cubeVa);
     cube.draw(gl, positionLocation, colorLocation, normalLocation);
@@ -107,7 +99,7 @@ function start() {
     // variables
     //
     let move = [-1.5, 0, -2];
-    let speed = 1.2;
+    let speed = 1;
 
     //
     // draw scene
@@ -120,28 +112,23 @@ function start() {
     window.onkeyup = (e) => {
         if (e.keyCode == 32) { // space
             move[1] -= 0.3;
-            return draw();
         }
         if (e.keyCode == 39) { // >
             //translation[1] += 5;
             move[0] -= 0.2;
             console.log(move);
-            return draw();
         }
         if (e.keyCode == 37) { // <
             move[0] += 0.2;
             console.log(move);
-            return draw();
         }
         if (e.keyCode == 38) { // up
             move[2] += 0.2;
             console.log(move);
-            return draw();
         }        
         if (e.keyCode == 40) { // down
             move[2] -= 0.2;
             console.log(move);
-            return draw();
         }
     }
 
@@ -150,9 +137,10 @@ function start() {
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     
         // clear canvas
-        gl.clearColor(0.7, 0.7, 0.7, 1); // rgba
+        gl.clearColor(1, 1, 1, 1); // rgba
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        // z-buffer
         gl.enable(gl.DEPTH_TEST);
 
         //gl.enable(gl.CULL_FACE);
@@ -171,7 +159,7 @@ function start() {
         const viewM = glMatrix.mat4.create();
         const normalM = glMatrix.mat4.create();
         //glMatrix.mat4.ortho(projectionM, 0, canvas.width, canvas.height, 0, 1, 400);
-        glMatrix.mat4.perspective(projectionM, 60 * Math.PI/180, canvas.width / canvas.height, 0.1, 400);
+        glMatrix.mat4.perspective(projectionM, 60 * Math.PI/180, canvas.width / canvas.height, 0.1, 2000);
 
         glMatrix.mat4.translate(modelM, modelM, move);
         glMatrix.mat4.translate(viewM, viewM, [-1, .1, 1]);
@@ -179,7 +167,7 @@ function start() {
 
         const modelViewM = glMatrix.mat4.create();
 
-        glMatrix.mat4.multiply(modelViewM, viewM, modelM);
+        
 /*
         glMatrix.mat4.rotateX(modelViewM, modelViewM, speed / 60);
         glMatrix.mat4.rotateY(modelViewM, modelViewM, speed / 60);
@@ -187,48 +175,46 @@ function start() {
 
         glMatrix.mat4.invert(normalM, modelViewM);
         glMatrix.mat4.transpose(normalM, normalM);    
-        
-        // Set the translation.
-
-
-        for (let i = 0; i < 5; i++) {
-            for (let j = 0; j < 5; j++) {
-                glMatrix.mat4.translate(modelViewM, modelViewM, [i, .1, -j]);
-                glMatrix.mat4.scale(modelViewM, modelViewM, [1, 1 + i, 1]);
-
-                gl.uniformMatrix4fv(projectionMatrix, false, projectionM);
-                gl.uniformMatrix4fv(modelViewMatrix, false, modelViewM);
-                gl.uniformMatrix4fv(normalMatrix, false, normalM);
-
-                gl.drawArrays(gl.TRIANGLES, 0, 6 * 6);
-                
-            }
-            //glMatrix.mat4.identity(modelViewM);
-        }
 
         //
-        // draw scene
+        // draw cubes
         //
-        // type, offset, count
-        //gl.drawArrays(gl.TRIANGLES, 0, 6 * 6);
 
-        gl.bindVertexArray(floorVa);
-
-        glMatrix.mat4.identity(modelViewM);
         glMatrix.mat4.multiply(modelViewM, viewM, modelM);
-
 
         gl.uniformMatrix4fv(projectionMatrix, false, projectionM);
         gl.uniformMatrix4fv(modelViewMatrix, false, modelViewM);
         gl.uniformMatrix4fv(normalMatrix, false, normalM);
 
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.drawArrays(gl.TRIANGLES, 0, 6 * 6);                
+        
+
+        //
+        // grid
+        //
+        gl.bindVertexArray(gridVa);
+        
+        glMatrix.mat4.identity(modelViewM);
+        glMatrix.mat4.multiply(modelViewM, viewM, modelM);
+        //glMatrix.mat4.multiply(modelViewM, modelViewM, [3,1,0,1, 2,2,0,0, 3,1,0,1, 0,0,0,1]);
+        /*glMatrix.mat4.scale(modelViewM, modelViewM, [2, 0, 2])
+        glMatrix.mat4.translate(modelViewM, modelViewM, [1, 0, 1])
+        glMatrix.mat4.rotateY(modelViewM, modelViewM, speed / 100);
+        glMatrix.mat4.translate(modelViewM, modelViewM, [0, 0, -1]);*/
+
+        gl.uniformMatrix4fv(projectionMatrix, false, projectionM);
+        gl.uniformMatrix4fv(modelViewMatrix, false, modelViewM);
+        gl.uniformMatrix4fv(normalMatrix, false, normalM);
+
+        gl.drawArrays(gl.LINES, 0, grid.getNumberOfPonits());
 
         speed += .6;
-        console.log(speed);
+        if (speed > 600) {
+            speed = 0;
+        }
+        console.log('speed: ' + speed);
         requestAnimationFrame(draw);
     }    
 }
 
 start();
-
